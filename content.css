@@ -1,0 +1,441 @@
+:root {
+    --primary-color: #0A66C2;
+    --secondary-color: #057642;
+    --white: #FFFFFF;
+    --dark: #101118;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-300: #D1D5DB;
+    --gray-400: #9CA3AF;
+    --gray-500: #6B7280;
+    --gray-600: #4B5563;
+    --gray-700: #374151;
+    
+    --font-primary: -apple-system, BlinkMacSystemFont, "Segoe UI", 
+                Roboto, "Helvetica Neue", "Arial", 
+                "Noto Sans", sans-serif, 
+                "Apple Color Emoji", "Segoe UI Emoji", 
+                "Segoe UI Symbol", "Noto Color Emoji";
+    --font-secondary: -apple-system, system-ui, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 2rem;
+    
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+    
+    --shadow-md: 0 1px 3px rgba(0, 0, 0, 0.1),
+                 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+/* Sidebar Container */
+#linkedin-assistant-sidebar {
+    position: fixed;
+    top: var(--spacing-lg);
+    right: 0;
+    width: 340px;
+    height: calc(100vh - 40px);
+    background: var(--white);
+    box-shadow: var(--shadow-md);
+    z-index: 9999;
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    overflow: hidden;
+    transform: translateX(0);
+    transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s ease;
+    opacity: 1;
+}
+
+#linkedin-assistant-sidebar.hidden {
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+/* Header */
+.sidebar-header {
+    padding: var(--spacing-md);
+    background: var(--dark);
+    color: var(--white);
+    height: 60px;
+    display: flex;
+    align-items: center;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.header-content img {
+    width: 24px;
+    height: 24px;
+}
+
+.header-content span {
+    font-family: var(--font-primary);
+    font-weight: 400;
+    font-size: 16px;
+    text-transform: uppercase;
+}
+
+.section-title {
+    font-family: var(--font-primary);
+    font-weight: 600;
+    font-size: 0.75rem; /* 12px */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--spacing-sm);
+    color: var(--dark);
+}
+
+/* Content Sections */
+.sidebar-content {
+    padding: var(--spacing-md);
+    height: calc(100% - 60px); 
+    overflow-y: auto;
+    background: var(--white);
+}
+
+.profile-section,
+.job-section,
+.message-type-section {
+    margin-bottom: var(--spacing-lg);
+    background: var(--white);
+}
+
+h3 {
+    font-family: var(--font-primary);
+    font-weight: 600;
+    font-size: 2rem;
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-sm);
+    color: var(--dark);
+}
+
+h3.section-title {
+    font-family: var(--font-primary);
+    font-weight: 400;
+    font-size: 1.5rem;
+    text-transform: uppercase;
+    margin-bottom: var(--spacing-sm);
+    color: var(--dark);
+}
+
+
+#profile-info {
+    background: var(--gray-50);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+#job-description {
+    width: 100%;
+    height: 100px;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    font-family: var(--font-secondary);
+    font-size: 14px;
+    resize: vertical;
+}
+
+#message-type {
+    width: 100%;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    font-family: var(--font-secondary);
+    font-size: 14px;
+    color: var(--gray-700);
+}
+
+/* CONTEXT section */
+.context-section {
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-sm);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
+}
+
+.context-description {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    margin-bottom: var(--spacing-sm);
+}
+
+.context-textarea {
+    width: 100%;
+    height: 80px;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    font-family: var(--font-secondary);
+    font-size: 14px;
+    resize: vertical;
+    background: var(--white);
+}
+
+.context-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.1);
+}
+
+#context-input {
+    width: 100%;
+    height: 80px;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    font-family: var(--font-secondary);
+    font-size: 14px;
+    resize: vertical;
+    margin-top: var(--spacing-xs);
+}
+
+#context-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.1);
+}
+
+/* Message Section */
+.message-section {
+    margin-top: var(--spacing-lg);
+}
+
+#message-text {
+    width: 100%;
+    height: 200px;
+    padding: var(--spacing-sm);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-sm);
+    font-family: var(--font-secondary);
+    font-size: 14px;
+    resize: vertical;
+    line-height: 1.6;
+    color: var(--gray-700);
+}
+
+.button-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+}
+
+.button-group button {
+    flex: 1;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-family: var(--font-primary);
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+#regenerate-btn {
+    background: var(--gray-100);
+    color: var(--gray-700);
+}
+
+#regenerate-btn:hover {
+    background: var(--gray-200);
+}
+
+#copy-btn {
+    background: var(--gray-700);
+    color: var(--white);
+}
+
+#copy-btn:hover {
+    background: var(--gray-600);
+}
+
+#send-btn {
+    background: var(--primary-color);
+    color: var(--white);
+}
+
+#send-btn:hover {
+    opacity: 0.9;
+}
+
+/* Toggle Container */
+.toggle-container {
+    position: fixed;
+    right: 0;
+    top: 20px;
+    width: 48px;
+    height: 48px;
+    background: var(--white);
+    border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    transition: all 0.2s ease;
+}
+
+.toggle-container:hover {
+    background: var(--gray-50);
+}
+
+.toggle-icon {
+    width: 24px;
+    height: 24px;
+}
+
+/* Make sure the toggle is always visible */
+#assistant-toggle {
+    z-index: 9999;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Hide toggle when sidebar is visible */
+#linkedin-assistant-sidebar:not(.hidden) ~ .toggle-container {
+    display: none;
+}
+
+/* Loading States */
+.loading {
+    position: relative;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--gray-200);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: loading 0.8s infinite linear;
+}
+
+/* Message type select state */
+#message-type:disabled {
+    background-color: var(--gray-100);
+    cursor: not-allowed;
+}
+
+
+@keyframes loading {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Select Styling */
+select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.7rem center;
+    background-size: 1em;
+}
+
+optgroup {
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+/* Disabled States */
+button:disabled {
+    opacity: 0.7;
+    cursor: wait;
+}
+
+select:disabled,
+textarea:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    #linkedin-assistant-sidebar {
+        width: 300px;
+    }
+    
+    .sidebar-header span {
+        font-size: 14px;
+    }
+    
+    .button-group button {
+        font-size: 12px;
+        padding: var(--spacing-xs) var(--spacing-sm);
+    }
+    
+    #message-text {
+        height: 150px;
+    }
+}
+
+/* Focus States */
+textarea:focus,
+select:focus,
+button:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(10, 102, 194, 0.1);
+}
+
+/* Scrollbar Styling */
+.sidebar-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar-content::-webkit-scrollbar-track {
+    background: var(--gray-50);
+}
+
+.sidebar-content::-webkit-scrollbar-thumb {
+    background: var(--gray-300);
+    border-radius: 4px;
+}
+
+.sidebar-content::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-400);
+}
+
+/* Error States */
+.error {
+    border-color: #DC2626 !important;
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+.error-message {
+    color: #DC2626;
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+/* Success States */
+.success {
+    border-color: #059669 !important;
+    background-color: #D1FAE5;
+    color: #065F46;
+}
+
+.success-message {
+    color: #059669;
+    font-size: 12px;
+    margin-top: 4px;
+}
