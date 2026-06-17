@@ -12,7 +12,7 @@
     const LOCAL_LOG_KEY = 'linkedin_dom_telemetry_log';
     const VOYAGER_MSG_TYPE = 'LINKEDIN_VOYAGER_MSG';
     const DEFAULT_REMOTE_CONFIG_URL =
-        'https://raw.githubusercontent.com/abaddion/Linkedin-Message-Manager/main/remote-config/selector-config.json';
+        'https://raw.githubusercontent.com/abaddion/linkedin-extension-config/main/selector-config.json';
 
     const UI_NOISE_PATTERNS = [
         /^(today|yesterday|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b/i,
