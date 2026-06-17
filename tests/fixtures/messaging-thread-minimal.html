@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><title>fixture</title></head>
+<body>
+<main>
+  <button aria-label="Open the options list in your conversation with Jane Doe.">Options</button>
+  <div role="log" class="msg-s-message-list-content">
+    <ul>
+      <li class="msg-s-message-list__event">
+        <div data-event-urn="urn:li:fs_event:(abc,MESSAGE)">
+          <p>Hi, I have a senior role that might fit your background.</p>
+        </div>
+      </li>
+      <li class="msg-s-message-list__event msg-s-message-list__event--sent">
+        <div data-event-urn="urn:li:fs_event:(def,MESSAGE)">
+          <p>Thanks for reaching out — can you share more details?</p>
+        </div>
+      </li>
+      <li class="msg-s-message-list__event">
+        <div data-event-urn="urn:li:fs_event:(ghi,MESSAGE)">
+          <p>Happy to — it is a remote contract, 6 months, fintech.</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+  <div role="textbox" contenteditable="true" aria-label="Write a message to Jane Doe"></div>
+  <button aria-label="Send" type="submit">Send</button>
+</main>
+</body>
+</html>

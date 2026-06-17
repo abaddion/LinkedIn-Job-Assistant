@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Job Assistant Options</title>
+    <link rel="stylesheet" href="options.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.typekit.net/vrs3dyr.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <img src="images/icon-48.png" alt="Extension Icon" class="logo">
+                <h1>Job Assistant Settings</h1>
+            </div>
+            <p>Configure your sign-off name and connect your own AI provider. The extension stays free; you only pay your provider for usage, using small inexpensive models suitable for LinkedIn messages.</p>
+        </header>
+
+        <main>
+            <section class="settings-card">
+                <h2>Your details</h2>
+                <div class="form-group">
+                    <label for="userName">Sign-off name</label>
+                    <p class="help-text">Name the AI should use when signing messages (for example your first name).</p>
+                    <input type="text" id="userName" placeholder="Enter your name" autocomplete="name">
+                </div>
+            </section>
+
+            <section class="settings-card highlight-card">
+                <h2>AI provider</h2>
+                <p class="help-text">Pick the service where you create an API key. We only list <strong>budget models</strong> (mini / flash / haiku). Premium tiers are omitted as unnecessary for this use case.</p>
+
+                <div class="form-group">
+                    <label for="llmProvider">Provider</label>
+                    <select id="llmProvider" class="select-field">
+                        <option value="openai">OpenAI</option>
+                        <option value="google">Google Gemini</option>
+                        <option value="anthropic">Anthropic (Claude)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="llmModel">Model</label>
+                    <p class="help-text model-help">Only inexpensive models are shown.</p>
+                    <select id="llmModel" class="select-field"></select>
+                </div>
+
+                <div class="form-group API-group">
+                    <label for="apiKey">API key</label>
+                    <input type="password" id="apiKey" placeholder="" autocomplete="off" spellcheck="false">
+                    <button type="button" id="toggleVisibility" class="visibility-btn" aria-label="Toggle API key visibility">Show</button>
+                </div>
+                <p class="help-text" id="keyHint"></p>
+
+                <div class="note privacy-note">
+                    <strong>Privacy:</strong> Your key is stored in Chrome sync/local storage only. It is sent only from your browser directly to the provider you selected.
+                </div>
+            </section>
+
+            <section class="settings-card">
+                <h2>How to get a key and typical cost</h2>
+                <p class="help-text section-intro">Pricing changes over time. Figures below are <em>ballpark</em> for light use. Check each vendor’s pricing page before billing.</p>
+
+                <details class="provider-details" open>
+                    <summary>OpenAI</summary>
+                    <ol>
+                        <li>Open <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener">API keys</a> and sign in.</li>
+                        <li>Create a new secret key (starts with <code>sk-</code>).</li>
+                        <li>Optional: set a <a href="https://platform.openai.com/settings/organization/billing" target="_blank" rel="noopener">billing limit</a>.</li>
+                    </ol>
+                    <p class="cost-blurb"><strong>Rough cost:</strong> GPT-4o mini is very cheap for many short generations. See <a href="https://openai.com/api/pricing/" target="_blank" rel="noopener">OpenAI pricing</a>.</p>
+                </details>
+
+                <details class="provider-details">
+                    <summary>Google Gemini</summary>
+                    <ol>
+                        <li>Open <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a> and create a key (<code>AIza</code>…).</li>
+                        <li>Review <a href="https://ai.google.dev/gemini-api/docs/rate-limits" target="_blank" rel="noopener">limits and billing</a>.</li>
+                    </ol>
+                    <p class="cost-blurb"><strong>Rough cost:</strong> Flash models are often low cost or have free tier allowances. See <a href="https://ai.google.dev/pricing" target="_blank" rel="noopener">Gemini API pricing</a>.</p>
+                </details>
+
+                <details class="provider-details">
+                    <summary>Anthropic (Claude)</summary>
+                    <ol>
+                        <li>Open <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener">Anthropic Console</a> and create an API key.</li>
+                        <li>Add billing in the console if required.</li>
+                    </ol>
+                    <p class="cost-blurb"><strong>Rough cost:</strong> Haiku is the budget Claude tier. See <a href="https://www.anthropic.com/pricing#api" target="_blank" rel="noopener">Anthropic API pricing</a>.</p>
+                </details>
+            </section>
+
+            <section class="settings-card">
+                <h2>Diagnostics &amp; selector config</h2>
+                <p class="help-text">Optional. No message or profile text is logged—only URL path, strategy index, and element counts.</p>
+                <div class="form-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="telemetryOptIn">
+                        Store local diagnostic events (opt-in)
+                    </label>
+                </div>
+                <div class="form-group">
+                    <label for="domRemoteConfigUrl">Remote selector JSON URL</label>
+                    <p class="help-text">HTTPS JSON (e.g. raw GitHub). Checked daily and after failed lookups. Leave empty to use the built-in default URL.</p>
+                    <input type="url" id="domRemoteConfigUrl" class="select-field" placeholder="https://raw.githubusercontent.com/…/selectors.json" autocomplete="off">
+                </div>
+            </section>
+
+            <div class="actions">
+                <span id="statusMessage" class="status-message"></span>
+                <button id="saveButton" type="button" class="save-button">Save settings</button>
+            </div>
+        </main>
+    </div>
+
+    <script src="llm-config.js"></script>
+    <script src="options.js"></script>
+</body>
+</html>

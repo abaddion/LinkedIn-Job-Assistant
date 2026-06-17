@@ -1,0 +1,81 @@
+{
+  "version": 2,
+  "minExtensionVersion": "1.0.6",
+  "strategies": {
+    "composer": [
+      {
+        "kind": "css",
+        "id": "composer-stable",
+        "selectors": [
+          "div[role=\"textbox\"][contenteditable=\"true\"][aria-label*=\"Write a message\" i]",
+          "[aria-label*=\"Write a message\" i][contenteditable=\"true\"]",
+          "[data-test-id=\"messaging-compose-body\"]",
+          "[data-testid=\"messaging-compose-body\"]",
+          "[placeholder*=\"message\" i][contenteditable=\"true\"]",
+          "div[contenteditable=\"true\"][role=\"textbox\"]"
+        ]
+      },
+      {
+        "kind": "nested",
+        "id": "composer-form",
+        "roots": [
+          "[data-test-id=\"messaging-compose-box\"]",
+          "[data-testid=\"messaging-compose-box\"]",
+          "[class*=\"msg-form\"]",
+          "[class*=\"messaging-composer\"]"
+        ],
+        "child": "[contenteditable=\"true\"][role=\"textbox\"], div[contenteditable=\"true\"]"
+      }
+    ],
+    "send": [
+      {
+        "kind": "css",
+        "id": "send-stable",
+        "selectors": [
+          "button[aria-label*=\"Send\" i]:not([disabled])",
+          "button[type=\"submit\"][aria-label*=\"Send\" i]:not([disabled])",
+          "[data-test-id=\"send-btn\"]:not([disabled])",
+          "[data-testid=\"send-btn\"]:not([disabled])"
+        ]
+      }
+    ],
+    "messageListRoot": [
+      {
+        "kind": "css",
+        "id": "msg-list-stable",
+        "selectors": [
+          "main [role=\"log\"]",
+          "[role=\"log\"]",
+          "[data-test-id=\"message-list\"]",
+          "[data-testid=\"message-list\"]",
+          "[class*=\"message-list-content\"]",
+          "[class*=\"msg-s-message-list\"]"
+        ]
+      }
+    ],
+    "messageEvents": [
+      {
+        "kind": "css",
+        "id": "msg-events-stable",
+        "selectors": [
+          "[data-event-urn]",
+          "li[role=\"listitem\"]",
+          "[class*=\"message-list__event\"]",
+          "li[class*=\"msg-s-message-list\"]"
+        ]
+      }
+    ],
+    "conversationListItem": [
+      {
+        "kind": "closest",
+        "id": "conv-item-stable",
+        "selectors": [
+          "[data-view-name=\"message-conversation-list-item\"]",
+          "a[href*=\"/messaging/thread/\"]",
+          "[class*=\"conversation-listitem\"]",
+          "[class*=\"conversation-card\"]"
+        ]
+      }
+    ]
+  }
+}

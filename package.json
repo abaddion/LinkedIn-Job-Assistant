@@ -1,0 +1,10 @@
+{
+  "name": "linkedin-job-assistant-tests",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/dom-kit.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0"
+  }
+}

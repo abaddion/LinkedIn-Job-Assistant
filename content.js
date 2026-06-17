@@ -1,11 +1,103 @@
-console.log('LinkedIn Job Assistant: Starting');
+(function () {
+    /* global LLMConfig, LinkedInDomKit */
+
+    console.log('LinkedIn Job Assistant: Starting');
+    LinkedInDomKit.init({ extId: 'lja' }).catch((err) => console.error('LJA dom kit init:', err));
 
 let OPENAI_API_KEY = null;
 let currentProfile = null;
 let jobDescription = null;
 let messageType = null;
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+async function getLlmSettings() {
+    const result = await chrome.storage.sync.get([
+        'llm_provider',
+        'llm_api_key',
+        'llm_model_id',
+        'openai_api_key'
+    ]);
+    const provider = LLMConfig.normalizeProvider(result.llm_provider || 'openai');
+    let apiKey = (result.llm_api_key || '').trim() || (result.openai_api_key || '').trim();
+    let modelId = (result.llm_model_id || '').trim();
+    if (!LLMConfig.isAllowedModel(provider, modelId)) {
+        modelId = LLMConfig.defaultModel(provider);
+    }
+    return { apiKey, provider, modelId };
+}
+
+async function completeOpenAIJob(apiKey, model, prompt, maxTokens) {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({
+            model,
+            messages: [{ role: 'user', content: prompt }],
+            temperature: 0.7,
+            max_tokens: maxTokens
+        })
+    });
+    const data = await response.json();
+    if (!response.ok || data.error) {
+        console.error('OpenAI API error:', data.error || data);
+        return null;
+    }
+    const text = data.choices?.[0]?.message?.content;
+    return text ? text.trim() : null;
+}
+
+async function completeGeminiJob(apiKey, model, prompt, maxTokens) {
+    const url =
+        'https://generativelanguage.googleapis.com/v1beta/models/' +
+        encodeURIComponent(model) +
+        ':generateContent?key=' +
+        encodeURIComponent(apiKey);
+    const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.7, maxOutputTokens: maxTokens }
+        })
+    });
+    const data = await response.json();
+    if (!response.ok || data.error) {
+        console.error('Gemini API error:', data.error || data);
+        return null;
+    }
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    return text ? text.trim() : null;
+}
+
+async function completeAnthropicJob(apiKey, model, prompt, maxTokens) {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+            model,
+            max_tokens: Math.min(Math.max(maxTokens, 256), 2048),
+            messages: [{ role: 'user', content: prompt }]
+        })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        console.error('Anthropic API error:', data);
+        return null;
+    }
+    const block = data.content?.find((b) => b.type === 'text');
+    const text = block?.text;
+    return text ? text.trim() : null;
+}
+
+if (!window.__ljaChromeListenerBound) {
+    window.__ljaChromeListenerBound = true;
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log('Message received in content script:', message);
     if (message.action === "toggleSidebar") {
         console.log('Toggle sidebar action received');
@@ -16,21 +108,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         } else {
             console.log('Creating new sidebar');
             createUI();
-            checkAndInitialize();
+            checkAndInitialize(true);
         }
         sendResponse({ status: 'ok' });
         return true;
     }
-});
+    });
+}
 
-async function checkAndInitialize() {
+async function checkAndInitialize(showSidebar = true) {
     const sidebar = document.getElementById('linkedin-assistant-sidebar');
-    sidebar.classList.remove('hidden'); // Show immediately
-    
+    if (!sidebar) return;
+    if (showSidebar) sidebar.classList.remove('hidden');
+
     try {
-        const result = await chrome.storage.sync.get(['openai_api_key']);
-        OPENAI_API_KEY = result.openai_api_key;
-        
+        const settings = await getLlmSettings();
+        OPENAI_API_KEY = settings.apiKey;
+
         if (!OPENAI_API_KEY) {
             OPENAI_API_KEY = await getApiKey();
         }
@@ -42,20 +136,16 @@ async function checkAndInitialize() {
 
 async function getApiKey() {
     try {
-        const result = await chrome.storage.sync.get(['openai_api_key']);
-        if (result.openai_api_key) {
-            return result.openai_api_key;
+        const { apiKey } = await getLlmSettings();
+        if (apiKey) {
+            return apiKey;
         }
-        const key = prompt('Please enter your OpenAI API key (will be stored securely):');
-        if (key) {
-            await chrome.storage.sync.set({ openai_api_key: key });
-            return key;
-        }
+
+        chrome.runtime.sendMessage({ action: "openOptionsPage" });
         return null;
     } catch (error) {
         console.error('Error accessing storage:', error);
-        const key = prompt('Please enter your OpenAI API key:');
-        return key || null;
+        return null;
     }
 }
 
@@ -94,11 +184,12 @@ function createUI() {
     toggleIcon.src = chrome.runtime.getURL('images/icon-side-48.png');
     toggleContainer.appendChild(toggleIcon);
 
-    // Set sidebar HTML content
+    // Set sidebar HTML content (Static skeleton, no variables)
     sidebar.innerHTML = `
     <div class="sidebar-header">
         <div class="header-content">
-            <img src="${chrome.runtime.getURL('images/icon-48.png')}" alt="Icon">
+            <!-- Asset paths are resolved before DOM placement dynamically -->
+            <img src="" alt="Icon" class="header-icon-img">
             <span>Job Assistant</span>
         </div>
     </div>
@@ -166,21 +257,76 @@ function createUI() {
         chrome.storage.sync.set({ 'sidebarHidden': false });
     });
 
+    // Set actual static assets safely via src attribute
+    const headerIconImg = sidebar.querySelector('.header-icon-img');
+    if (headerIconImg) {
+        headerIconImg.src = chrome.runtime.getURL('images/icon-48.png');
+    }
+
+    // Insert warning banner that will show up conditionally if API key is missing
+    const warningBanner = document.createElement('div');
+    warningBanner.id = 'api-warning';
+    warningBanner.style.backgroundColor = '#FEF2F2';
+    warningBanner.style.color = '#EF4444';
+    warningBanner.style.padding = '10px';
+    warningBanner.style.marginBottom = '10px';
+    warningBanner.style.borderRadius = '4px';
+    warningBanner.style.border = '1px solid #FCA5A5';
+    warningBanner.style.textAlign = 'center';
+    warningBanner.style.display = 'none'; // Hidden initially
+    
+    warningBanner.innerHTML = `
+        <strong>API key missing</strong><br>
+        <span style="font-size: 12px;">Open settings and add your OpenAI, Gemini, or Anthropic key.</span><br>
+        <a href="#" id="open-settings-link" style="color: #DC2626; text-decoration: underline; font-weight: bold; margin-top: 5px; display: inline-block;">Open settings</a>
+    `;
+    sidebar.querySelector('.sidebar-content').prepend(warningBanner);
+
+    // Add settings link handler
+    warningBanner.querySelector('#open-settings-link').addEventListener('click', (e) => {
+        e.preventDefault();
+        chrome.runtime.sendMessage({ action: "openOptionsPage" });
+    });
+
     // Append elements to body
     document.body.appendChild(sidebar);
     document.body.appendChild(toggleContainer);
+    
+    // Auto-check for API key warning once UI is placed
+    setTimeout(showApiWarningIfMissing, 500);
+}
+
+async function showApiWarningIfMissing() {
+    const { apiKey } = await getLlmSettings();
+    const warningBanner = document.getElementById('api-warning');
+    if (warningBanner) {
+        if (!apiKey) {
+            warningBanner.style.display = 'block';
+        } else {
+            warningBanner.style.display = 'none';
+        }
+    }
 }
 
 function attachEventListeners() {
+    if (window.__recberryLJAListenersAttached) return;
+    window.__recberryLJAListenersAttached = true;
+
     checkCurrentPage();
     setupUrlObserver();
-    
+
     document.addEventListener('click', async (e) => {
-        let profileSection = e.target.closest('.entity-result__item, .pv-top-card');
+        if (e.target.closest('#linkedin-assistant-sidebar, #assistant-toggle')) return;
+
+        const profileSection = e.target.closest(
+            '.entity-result__item, .reusable-search__result-container, .pv-top-card, [data-view-name="search-entity-result-universal-template"]'
+        );
         if (profileSection) {
-            currentProfile = profileSection.matches('.entity-result__item') ?
-                extractProfileFromSearch(profileSection) :
-                extractProfileFromPage(profileSection);
+            const fromSearch =
+                profileSection.matches('.entity-result__item, .reusable-search__result-container, [data-view-name="search-entity-result-universal-template"]');
+            currentProfile = fromSearch
+                ? extractProfileFromSearch(profileSection)
+                : extractProfileFromPage(profileSection);
             updateProfileInfo();
             enableMessageGeneration();
         }
@@ -259,7 +405,7 @@ function attachEventListeners() {
 
     async function checkCurrentPage() {
         if (location.href.includes('/in/')) {
-            await waitForElement('.pv-top-card');
+            await waitForElement('.pv-top-card, main section.artdeco-card');
             await extractProfileData();
         }
     }
@@ -287,10 +433,25 @@ function attachEventListeners() {
     async function extractProfileData() {
         try {
             const selectors = {
-                name: ['.text-heading-xlarge', '.inline-show-more-text strong', '[data-field="name"]'],
-                title: ['.text-body-medium', '.ph5 .text-body-small', '[data-field="headline"]'],
-                company: ['.pv-text-details__right-panel .inline-show-more-text', '.experience-section .pv-entity__company-summary-info h3', '[data-field="experience"]'],
-                about: ['.pv-about-section .inline-show-more-text', '#about']
+                name: [
+                    '.text-heading-xlarge',
+                    'h1.inline.t-24',
+                    '.inline-show-more-text strong',
+                    '[data-field="name"]'
+                ],
+                title: [
+                    '.text-body-medium',
+                    '.ph5 .text-body-small',
+                    '[data-field="headline"]',
+                    '.top-card-layout__headline'
+                ],
+                company: [
+                    '.pv-text-details__right-panel .inline-show-more-text',
+                    '.experience-section .pv-entity__company-summary-info h3',
+                    '[data-field="experience"]',
+                    '.text-body-small.inline'
+                ],
+                about: ['.pv-about-section .inline-show-more-text', '#about', '[data-section="summary"]']
             };
 
             const profile = {};
@@ -316,40 +477,61 @@ function attachEventListeners() {
         }
     }
 
-    function  extractProfileFromSearch(profileSection) {
+    function extractProfileFromSearch(profileSection) {
+        const nameEl = LinkedInDomKit.findInContainer(profileSection, 'jobSearchName');
+        const titleEl = LinkedInDomKit.findInContainer(profileSection, 'jobSearchSubtitle');
+        const companyEl = LinkedInDomKit.findInContainer(profileSection, 'jobSearchCompany');
         return {
-            name: profileSection.querySelector('.app-aware-link')?.textContent.trim(),
-            title: profileSection.querySelector('.entity-result__primary-subtitle')?.textContent.trim(),
-            company: profileSection.querySelector('.entity-result__secondary-subtitle')?.textContent.trim()
+            name: nameEl?.textContent.trim(),
+            title: titleEl?.textContent.trim(),
+            company: companyEl?.textContent.trim()
         };
     }
 
     function extractProfileFromPage(profileSection) {
+        const nameEl = LinkedInDomKit.findInContainer(profileSection, 'jobProfileName');
+        const titleEl = LinkedInDomKit.findInContainer(profileSection, 'profileTitle');
         return {
-            name: profileSection.querySelector('.text-heading-xlarge')?.textContent.trim(),
-            title: profileSection.querySelector('.text-body-medium')?.textContent.trim(),
-            company: profileSection.querySelector('.inline-show-more-text')?.textContent.trim()
+            name: nameEl?.textContent.trim(),
+            title:
+                titleEl?.textContent.trim() ||
+                profileSection.querySelector('.text-body-medium')?.textContent.trim() ||
+                profileSection.querySelector('.top-card-layout__headline')?.textContent.trim(),
+            company:
+                profileSection.querySelector('.pv-text-details__left-panel ~ * .inline-show-more-text')
+                    ?.textContent.trim() ||
+                profileSection.querySelector('.inline-show-more-text')?.textContent.trim()
         };
     }
 
     function updateProfileInfo() {
         const profileInfo = document.getElementById('profile-info');
-        if (currentProfile) {
-            profileInfo.innerHTML = `
-                <div class="profile-info-item">
-                    <strong>Name:</strong> ${currentProfile.name || 'Not available'}
-                </div>
-                ${currentProfile.title ? `
-                    <div class="profile-info-item">
-                        <strong>Title:</strong> ${currentProfile.title}
-                    </div>
-                ` : ''}
-                ${currentProfile.company ? `
-                    <div class="profile-info-item">
-                        <strong>Company:</strong> ${currentProfile.company}
-                    </div>
-                ` : ''}
-            `;
+        if (profileInfo && currentProfile) {
+            profileInfo.innerHTML = ''; // Safely clear out node structure
+            
+            const createInfoItem = (labelStr, valueStr) => {
+                const containerDiv = document.createElement('div');
+                containerDiv.className = 'profile-info-item';
+                
+                const labelStrong = document.createElement('strong');
+                labelStrong.textContent = labelStr + ': ';
+                containerDiv.appendChild(labelStrong);
+                
+                const valueText = document.createTextNode(valueStr);
+                containerDiv.appendChild(valueText);
+                
+                return containerDiv;
+            };
+
+            profileInfo.appendChild(createInfoItem('Name', currentProfile.name || 'Not available'));
+
+            if (currentProfile.title) {
+                profileInfo.appendChild(createInfoItem('Title', currentProfile.title));
+            }
+
+            if (currentProfile.company) {
+                profileInfo.appendChild(createInfoItem('Company', currentProfile.company));
+            }
         }
     }
 
@@ -381,7 +563,7 @@ function attachEventListeners() {
             if (!OPENAI_API_KEY) {
                 OPENAI_API_KEY = await getApiKey();
                 if (!OPENAI_API_KEY) {
-                    messageText.value = 'Please set up your OpenAI API key first.';
+                    messageText.value = 'Please set up your API key in extension settings.';
                     return;
                 }
             }
@@ -441,32 +623,24 @@ function attachEventListeners() {
     }
 
     async function callChatGPT(prompt) {
+        const maxTokens = messageType?.includes('inmail') ? 400 : 150;
         try {
-            const response = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${OPENAI_API_KEY}`
-                },
-                body: JSON.stringify({
-                    model: 'gpt-3.5-turbo',
-                    messages: [{ role: 'user', content: prompt }],
-                    temperature: 0.7,
-                    max_tokens: messageType?.includes('inmail') ? 400 : 150
-                })
-            });
-    
-            const data = await response.json();
-            if (data.error) {
-                if (data.error.code === 'invalid_api_key') {
-                    OPENAI_API_KEY = await getApiKey(); 
-                    return callChatGPT(prompt); 
-                }
-                throw new Error(data.error.message);
+            const { apiKey, provider, modelId } = await getLlmSettings();
+            if (!apiKey) return null;
+            OPENAI_API_KEY = apiKey;
+
+            if (provider === 'openai') {
+                return completeOpenAIJob(apiKey, modelId, prompt, maxTokens);
             }
-            return data.choices?.[0]?.message?.content?.trim() || null;
+            if (provider === 'google') {
+                return completeGeminiJob(apiKey, modelId, prompt, maxTokens);
+            }
+            if (provider === 'anthropic') {
+                return completeAnthropicJob(apiKey, modelId, prompt, maxTokens);
+            }
+            return null;
         } catch (error) {
-            console.error('ChatGPT API call failed:', error);
+            console.error('LLM API call failed:', error);
             return null;
         }
     }
@@ -489,13 +663,18 @@ function attachEventListeners() {
         if (!messageText) return;
 
         try {
-            const messageInput = document.querySelector('.msg-form__contenteditable');
+            const messageInput = LinkedInDomKit.getComposer();
             if (!messageInput) throw new Error('Message input not found');
 
             messageInput.textContent = messageText;
+            messageInput.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: messageText }));
             messageInput.dispatchEvent(new Event('input', { bubbles: true }));
 
-            const sendButton = document.querySelector('.msg-form__send-button');
+            let sendButton = LinkedInDomKit.getSendButton();
+            if (!sendButton || sendButton.disabled) {
+                await new Promise((r) => setTimeout(r, 200));
+                sendButton = LinkedInDomKit.getSendButton();
+            }
             if (!sendButton) throw new Error('Send button not found');
 
             sendButton.click();
@@ -531,3 +710,19 @@ window.addEventListener('error', (event) => {
 window.addEventListener('unhandledrejection', (event) => {
     console.error('LinkedIn Job Assistant Unhandled Promise Rejection:', event.reason);
 });
+
+// Auto-initialize on load and when re-injected (LinkedIn SPA navigation)
+(async function init() {
+    if (!document.body) return;
+    if (document.getElementById('linkedin-assistant-sidebar')) {
+        return;
+    }
+    window.__recberryLJAListenersAttached = false;
+
+    createUI();
+    chrome.storage.sync.get(['sidebarHidden'], (result) => {
+        const showSidebar = !result.sidebarHidden;
+        checkAndInitialize(showSidebar);
+    });
+})();
+})();

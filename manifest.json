@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "LinkedIn Job Assistant",
-  "version": "1.0.1",
+  "version": "1.0.7",
   "description": "AI-powered LinkedIn assistant helping job seekers connect with hiring managers and recruiters professionally",
   "author": "barush.jensik@gmail.com",
   "icons": {
@@ -18,22 +18,29 @@
       "128": "images/icon-128.png"
     }
   },
+  "options_page": "options.html",
   "permissions": [
-    "storage"
+    "storage",
+    "scripting",
+    "webNavigation"
   ],
   "host_permissions": [
     "https://*.linkedin.com/*",
-    "https://api.openai.com/*"
+    "https://api.openai.com/*",
+    "https://generativelanguage.googleapis.com/*",
+    "https://api.anthropic.com/*",
+    "https://raw.githubusercontent.com/*"
   ],
   "content_scripts": [{
     "matches": ["https://*.linkedin.com/*"],
     "css": ["content.css"],
-    "js": ["content.js"]
+    "js": ["linkedin-dom-kit.js", "llm-config.js", "content.js"]
   }],
   "web_accessible_resources": [{
     "resources": [
       "images/icon-48.png",
-      "images/icon-side-48.png"
+      "images/icon-side-48.png",
+      "voyager-intercept.js"
     ],
     "matches": ["https://*.linkedin.com/*"]
   }],

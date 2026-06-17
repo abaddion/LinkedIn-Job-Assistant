@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "minExtensionVersion": "1.0.6",
+  "strategies": {
+    "composer": [
+      {
+        "kind": "css",
+        "id": "composer-direct",
+        "selectors": [".msg-form__contenteditable", ".msg-form [contenteditable=\"true\"]"]
+      }
+    ]
+  }
+}
